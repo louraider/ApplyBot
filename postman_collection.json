@@ -1,0 +1,404 @@
+{
+  "info": {
+    "name": "Job Application System API",
+    "description": "API collection for testing the Job Application System endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Checks",
+      "item": [
+        {
+          "name": "Root Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Basic Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "API Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/health/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "health", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detailed Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/health/detailed",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "health", "detailed"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"full_name\": \"Test User\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/123e4567-e89b-12d3-a456-426614174000",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "123e4567-e89b-12d3-a456-426614174000"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "Get All Projects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"E-commerce Website\",\n  \"description\": \"Full-stack e-commerce platform built with React and Node.js\",\n  \"technologies\": [\"React\", \"Node.js\", \"MongoDB\", \"Express\"],\n  \"duration\": \"3 months\",\n  \"achievements\": [\"Implemented payment gateway\", \"Built admin dashboard\"],\n  \"project_type\": \"Full-Stack\",\n  \"priority\": 8\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/123e4567-e89b-12d3-a456-426614174000",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", "123e4567-e89b-12d3-a456-426614174000"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Project",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated E-commerce Website\",\n  \"description\": \"Enhanced e-commerce platform with microservices architecture\",\n  \"technologies\": [\"React\", \"Node.js\", \"MongoDB\", \"Express\", \"Docker\"],\n  \"priority\": 9\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/123e4567-e89b-12d3-a456-426614174000",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", "123e4567-e89b-12d3-a456-426614174000"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Project",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/123e4567-e89b-12d3-a456-426614174000",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", "123e4567-e89b-12d3-a456-426614174000"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "item": [
+        {
+          "name": "Get All Jobs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Jobs with Filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/?keywords=React Developer&location=Remote&limit=10&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", ""],
+              "query": [
+                {
+                  "key": "keywords",
+                  "value": "React Developer"
+                },
+                {
+                  "key": "location",
+                  "value": "Remote"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Jobs from External APIs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"keywords\": [\"React\", \"Frontend\", \"JavaScript\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/fetch",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "fetch"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Job by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/123e4567-e89b-12d3-a456-426614174000",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "123e4567-e89b-12d3-a456-426614174000"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Resumes",
+      "item": [
+        {
+          "name": "Generate Resume",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"job_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"user_id\": \"123e4567-e89b-12d3-a456-426614174001\",\n  \"selected_projects\": [\n    \"123e4567-e89b-12d3-a456-426614174002\",\n    \"123e4567-e89b-12d3-a456-426614174003\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/resumes/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resumes", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Resume by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resumes/123e4567-e89b-12d3-a456-426614174000",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resumes", "123e4567-e89b-12d3-a456-426614174000"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Download Resume PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resumes/123e4567-e89b-12d3-a456-426614174000/download",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resumes", "123e4567-e89b-12d3-a456-426614174000", "download"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cover Letters",
+      "item": [
+        {
+          "name": "Generate Cover Letter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"123e4567-e89b-12d3-a456-426614174001\",\n  \"resume_summary\": \"Experienced React developer with 3+ years building scalable web applications\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/cover-letters/123e4567-e89b-12d3-a456-426614174000",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "cover-letters", "123e4567-e89b-12d3-a456-426614174000"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Cover Letter by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/cover-letters/123e4567-e89b-12d3-a456-426614174000",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "cover-letters", "123e4567-e89b-12d3-a456-426614174000"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Download Cover Letter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/cover-letters/123e4567-e89b-12d3-a456-426614174000/download",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "cover-letters", "123e4567-e89b-12d3-a456-426614174000", "download"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+\documentclass{resume}
+
+\usepackage[left=0.4 in,top=0.4in,right=0.4 in,bottom=0.4in]{geometry}
+
+{% raw %}\newcommand{\tab}[1]{\hspace{.2667\textwidth}\rlap{#1}}{% endraw %}
+{% raw %}\newcommand{\itab}[1]{\hspace{0em}\rlap{#1}}{% endraw %}
+
+
+\name{ {{ name }} }
+
+\address{ {{ phone }} \\ {{ location }} }
+
+\address{\href{mailto:{{ email }}}{ {{ email }} } \\ \href{ {{ linkedin_url }} }{ {{ linkedin_display }} } \\ \href{ {{ website_url }} }{ {{ website_display }} }}
+
+\begin{document}
+
+\begin{rSection}{OBJECTIVE}
+
+{{ objective }}
+
+\end{rSection}
+
+\begin{rSection}{Education}
+
+{% for edu in education %}
+
+{\bf {{ edu.degree }}}, {{ edu.institution }} \hfill {{ edu.year }}\\
+
+{% if edu.coursework %}Relevant Coursework: {{ edu.coursework }}.{% endif %}
+
+{% if edu.gpa %}GPA: {{ edu.gpa }}{% endif %}
+
+{% if not loop.last %}\\{% endif %}
+
+{% endfor %}
+
+\end{rSection}
+
+\begin{rSection}{SKILLS}
+
+\begin{tabular}{ @{} >{\bfseries}l @{\hspace{6ex}} l }
+
+{% for skill_category in skills %}
+
+{{ skill_category.category }} & {{ skill_category.items | join(', ') }}\\
+
+{% endfor %}
+
+\end{tabular}\\
+
+\end{rSection}
+
+\begin{rSection}{EXPERIENCE}
+
+{% for exp in experience %}
+
+\textbf{ {{ exp.role }} } \hfill {{ exp.duration }}\\
+
+{{ exp.company }} \hfill \textit{ {{ exp.location }} }
+
+\begin{itemize}
+
+\itemsep -3pt {}
+
+{% for achievement in exp.achievements %}
+
+\item {{ achievement }}
+
+{% endfor %}
+
+\end{itemize}
+
+{% if not loop.last %}
+
+{% endif %}
+
+{% endfor %}
+
+\end{rSection}
+
+\begin{rSection}{PROJECTS}
+
+\vspace{-1.25em}
+
+\begin{itemize}
+
+{% for project in projects %}
+
+\item \textbf{ {{ project.title }} .} {{ project.description }}
+
+{% endfor %}
+
+\end{itemize}
+
+\end{rSection}
+
+{% if extra_curricular %}
+
+\begin{rSection}{Extra-Curricular Activities}
+
+\begin{itemize}
+
+{% for activity in extra_curricular %}
+
+\item {{ activity }}
+
+{% endfor %}
+
+\end{itemize}
+
+\end{rSection}
+
+{% endif %}
+
+{% if leadership %}
+
+\begin{rSection}{Leadership}
+
+\begin{itemize}
+
+{% for leadership_item in leadership %}
+
+\item {{ leadership_item }}
+
+{% endfor %}
+
+\end{itemize}
+
+\end{rSection}
+
+{% endif %}
+
+\end{document}
