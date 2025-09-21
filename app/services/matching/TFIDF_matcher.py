@@ -12,7 +12,7 @@ import numpy as np
 from loguru import logger
 
 from .base_matcher import BaseProjectMatcher, MatchResult, JobContext
-from app.database.models import Project
+from app.models import Project
 
 class TFIDFProjectMatcher(BaseProjectMatcher):
     """TF-IDF based project matching with keyword analysis."""

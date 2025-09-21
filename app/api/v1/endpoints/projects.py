@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 
 from app.database.base import get_db
 from app.services.project_service import ProjectService
-from app.services.project_matching_service import ProjectMatchingService
+from app.services.project_service import ProjectMatchingService
 
 router = APIRouter()
 

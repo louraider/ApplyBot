@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Tuple
 from dataclasses import dataclass
-from app.database.models import Project
+from app.models import Project
 
 @dataclass
 class MatchResult:

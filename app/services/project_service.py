@@ -4,7 +4,7 @@ Project service for database operations.
 
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
-from app.database.models import Project
+from app.models import Project
 from datetime import datetime, timezone
 from loguru import logger
 
