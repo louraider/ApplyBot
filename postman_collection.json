@@ -1,13 +1,29 @@
 {
   "info": {
-    "name": "Job Application System API",
-    "description": "API collection for testing the Job Application System endpoints",
+    "name": "Job Application System API - Complete Collection",
+    "description": "Comprehensive API collection for testing the Job Application System with all endpoints including project matching, filtering, and enhanced CRUD operations",
+    "version": "2.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "base_url",
       "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "test_user_id",
+      "value": "550e8400-e29b-41d4-a716-446655440000",
+      "type": "string"
+    },
+    {
+      "key": "test_project_id",
+      "value": "{{$randomUUID}}",
+      "type": "string"
+    },
+    {
+      "key": "test_job_id",
+      "value": "{{$randomUUID}}",
       "type": "string"
     }
   ],
@@ -113,9 +129,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/users/123e4567-e89b-12d3-a456-426614174000",
+              "raw": "{{base_url}}/api/v1/users/{{test_user_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "123e4567-e89b-12d3-a456-426614174000"]
+              "path": ["api", "v1", "users", "{{test_user_id}}"]
             }
           },
           "response": []
@@ -123,23 +139,29 @@
       ]
     },
     {
-      "name": "Projects",
+      "name": "Projects - CRUD Operations",
       "item": [
         {
-          "name": "Get All Projects",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/projects/",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "projects", ""]
+          "name": "Create Project - Machine Learning",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has project id\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.exist;",
+                  "    pm.collectionVariables.set(\"created_project_id\", jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
             }
-          },
-          "response": []
-        },
-        {
-          "name": "Create Project",
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -150,12 +172,119 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"E-commerce Website\",\n  \"description\": \"Full-stack e-commerce platform built with React and Node.js\",\n  \"technologies\": [\"React\", \"Node.js\", \"MongoDB\", \"Express\"],\n  \"duration\": \"3 months\",\n  \"achievements\": [\"Implemented payment gateway\", \"Built admin dashboard\"],\n  \"project_type\": \"Full-Stack\",\n  \"priority\": 8\n}"
+              "raw": "{\n  \"title\": \"AI-Powered Customer Behavior Analytics Platform\",\n  \"description\": \"Developed an intelligent customer analytics platform that processes real-time user behavior data to provide actionable business insights. The system uses machine learning algorithms to predict customer churn, recommend products, and segment users based on behavior patterns.\",\n  \"technologies\": [\"Python\", \"TensorFlow\", \"Pandas\", \"NumPy\", \"Apache Kafka\", \"PostgreSQL\", \"Redis\", \"Docker\", \"Streamlit\", \"Plotly\"],\n  \"category\": \"Machine Learning\",\n  \"project_url\": \"https://github.com/username/customer-analytics-ai\",\n  \"achievments\": {\n    \"model_performance\": {\n      \"churn_prediction_accuracy\": \"89%\",\n      \"recommendation_precision\": \"84%\",\n      \"data_processing_speed\": \"500GB/hour\",\n      \"real_time_latency\": \"50ms\"\n    },\n    \"business_results\": [\n      \"Reduced customer churn by 32% through predictive interventions\",\n      \"Increased product recommendations click-through rate by 45%\",\n      \"Generated $1.2M additional revenue through targeted campaigns\"\n    ]\n  },\n  \"skills_demonstrated\": [\"Machine Learning\", \"Data Science\", \"Real-time Analytics\", \"Predictive Modeling\", \"Big Data Processing\", \"Data Visualization\", \"MLOps\"]\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/projects/",
+              "raw": "{{base_url}}/api/v1/projects/?user_id={{test_user_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "projects", ""]
+              "path": ["api", "v1", "projects", ""],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Project - Web Development",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Real-Time E-commerce Platform with Microservices\",\n  \"description\": \"Built scalable e-commerce platform using microservices architecture serving 100K+ users. Implemented 12 independent services with event-driven communication using Apache Kafka and comprehensive API gateway.\",\n  \"technologies\": [\"React\", \"Node.js\", \"Express.js\", \"PostgreSQL\", \"Redis\", \"Docker\", \"Kubernetes\", \"AWS\", \"Apache Kafka\"],\n  \"category\": \"Web Development\",\n  \"project_url\": \"https://github.com/username/ecommerce-microservices\",\n  \"achievments\": {\n    \"system_performance\": {\n      \"concurrent_users\": \"100K+\",\n      \"response_time\": \"120ms average\",\n      \"uptime\": \"99.95%\",\n      \"transactions_per_second\": 5000\n    },\n    \"business_impact\": [\n      \"Achieved 99.95% uptime with zero-downtime deployments\",\n      \"Reduced operational costs by 30% through containerization\",\n      \"Improved page load times by 60% with caching strategies\"\n    ]\n  },\n  \"skills_demonstrated\": [\"Microservices Architecture\", \"System Design\", \"Event-Driven Architecture\", \"DevOps\", \"Cloud Computing\", \"API Design\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/?user_id={{test_user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", ""],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Projects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/?user_id={{test_user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", ""],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Projects with Filters - Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/?user_id={{test_user_id}}&category=Machine Learning&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", ""],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                },
+                {
+                  "key": "category",
+                  "value": "Machine Learning"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Projects with Filters - Technology",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/?user_id={{test_user_id}}&technology=Python&limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", ""],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                },
+                {
+                  "key": "technology",
+                  "value": "Python"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
             }
           },
           "response": []
@@ -166,9 +295,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/projects/123e4567-e89b-12d3-a456-426614174000",
+              "raw": "{{base_url}}/api/v1/projects/{{created_project_id}}?user_id={{test_user_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "projects", "123e4567-e89b-12d3-a456-426614174000"]
+              "path": ["api", "v1", "projects", "{{created_project_id}}"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                }
+              ]
             }
           },
           "response": []
@@ -185,12 +320,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated E-commerce Website\",\n  \"description\": \"Enhanced e-commerce platform with microservices architecture\",\n  \"technologies\": [\"React\", \"Node.js\", \"MongoDB\", \"Express\", \"Docker\"],\n  \"priority\": 9\n}"
+              "raw": "{\n  \"title\": \"Enhanced AI-Powered Customer Analytics Platform\",\n  \"description\": \"Enhanced intelligent customer analytics platform with advanced machine learning capabilities, real-time processing, and improved scalability. Added support for multi-cloud deployment and enhanced security features.\",\n  \"technologies\": [\"Python\", \"TensorFlow\", \"PyTorch\", \"Pandas\", \"NumPy\", \"Apache Kafka\", \"PostgreSQL\", \"Redis\", \"Docker\", \"Kubernetes\", \"AWS\", \"Streamlit\", \"Plotly\"],\n  \"skills_demonstrated\": [\"Machine Learning\", \"Deep Learning\", \"Data Science\", \"Real-time Analytics\", \"Predictive Modeling\", \"Big Data Processing\", \"Data Visualization\", \"MLOps\", \"Cloud Architecture\"]\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/projects/123e4567-e89b-12d3-a456-426614174000",
+              "raw": "{{base_url}}/api/v1/projects/{{created_project_id}}?user_id={{test_user_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "projects", "123e4567-e89b-12d3-a456-426614174000"]
+              "path": ["api", "v1", "projects", "{{created_project_id}}"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                }
+              ]
             }
           },
           "response": []
@@ -201,9 +342,183 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/projects/123e4567-e89b-12d3-a456-426614174000",
+              "raw": "{{base_url}}/api/v1/projects/{{created_project_id}}?user_id={{test_user_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "projects", "123e4567-e89b-12d3-a456-426614174000"]
+              "path": ["api", "v1", "projects", "{{created_project_id}}"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Projects - Utility Endpoints",
+      "item": [
+        {
+          "name": "Get Project Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/categories/list",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", "categories", "list"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Popular Technologies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/technologies/popular",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", "technologies", "popular"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Create Projects",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"title\": \"Mobile Fitness Tracking App\",\n    \"description\": \"Cross-platform mobile app with AI-powered workout recommendations and social features\",\n    \"technologies\": [\"React Native\", \"TypeScript\", \"Node.js\", \"MongoDB\", \"Firebase\"],\n    \"category\": \"Mobile App Development\",\n    \"project_url\": \"https://github.com/username/fitness-app\",\n    \"skills_demonstrated\": [\"Mobile Development\", \"Cross-platform Development\", \"AI Integration\"]\n  },\n  {\n    \"title\": \"Blockchain Supply Chain Platform\",\n    \"description\": \"Decentralized supply chain management system using smart contracts\",\n    \"technologies\": [\"Solidity\", \"Web3.js\", \"React\", \"Node.js\", \"Ethereum\"],\n    \"category\": \"Blockchain\",\n    \"project_url\": \"https://github.com/username/supply-chain-blockchain\",\n    \"skills_demonstrated\": [\"Blockchain Development\", \"Smart Contracts\", \"Decentralized Systems\"]\n  }\n]"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/bulk-create?user_id={{test_user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", "bulk-create"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Project Matching",
+      "item": [
+        {
+          "name": "Match Projects to Job",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/project-matching/match/{{test_job_id}}?user_id={{test_user_id}}&max_results=5&algorithm=tfidf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "project-matching", "match", "{{test_job_id}}"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                },
+                {
+                  "key": "max_results",
+                  "value": "5"
+                },
+                {
+                  "key": "algorithm",
+                  "value": "tfidf"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Match Projects",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"job_ids\": [\"{{test_job_id}}\", \"123e4567-e89b-12d3-a456-426614174001\"],\n  \"max_results_per_job\": 3,\n  \"algorithm\": \"tfidf\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/project-matching/match/bulk?user_id={{test_user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "project-matching", "match", "bulk"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Matching Explanation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/project-matching/match/{{test_job_id}}/explain?user_id={{test_user_id}}&algorithm=tfidf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "project-matching", "match", "{{test_job_id}}", "explain"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                },
+                {
+                  "key": "algorithm",
+                  "value": "tfidf"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clear User Cache",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/project-matching/cache/{{test_user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "project-matching", "cache", "{{test_user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Cache Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/project-matching/cache/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "project-matching", "cache", "stats"]
             }
           },
           "response": []
@@ -232,17 +547,21 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/jobs/?keywords=React Developer&location=Remote&limit=10&offset=0",
+              "raw": "{{base_url}}/api/v1/jobs/?keywords=Python Developer&location=Remote&salary_min=80000&limit=10&offset=0",
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "jobs", ""],
               "query": [
                 {
                   "key": "keywords",
-                  "value": "React Developer"
+                  "value": "Python Developer"
                 },
                 {
                   "key": "location",
                   "value": "Remote"
+                },
+                {
+                  "key": "salary_min",
+                  "value": "80000"
                 },
                 {
                   "key": "limit",
@@ -269,7 +588,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"keywords\": [\"React\", \"Frontend\", \"JavaScript\"]\n}"
+              "raw": "{\n  \"keywords\": [\"Python\", \"Machine Learning\", \"Data Science\"],\n  \"location\": \"Remote\",\n  \"experience_level\": \"mid\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/jobs/fetch",
@@ -285,9 +604,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/jobs/123e4567-e89b-12d3-a456-426614174000",
+              "raw": "{{base_url}}/api/v1/jobs/{{test_job_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "jobs", "123e4567-e89b-12d3-a456-426614174000"]
+              "path": ["api", "v1", "jobs", "{{test_job_id}}"]
             }
           },
           "response": []
@@ -298,7 +617,7 @@
       "name": "Resumes",
       "item": [
         {
-          "name": "Generate Resume",
+          "name": "Generate Resume with Job ID",
           "request": {
             "method": "POST",
             "header": [
@@ -309,38 +628,40 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"job_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"user_id\": \"123e4567-e89b-12d3-a456-426614174001\",\n  \"selected_projects\": [\n    \"123e4567-e89b-12d3-a456-426614174002\",\n    \"123e4567-e89b-12d3-a456-426614174003\"\n  ]\n}"
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"phone\": \"+1-555-123-4567\",\n  \"location\": \"San Francisco, CA\",\n  \"email\": \"john.doe@email.com\",\n  \"projects\": [\n    {\n      \"title\": \"AI Customer Analytics Platform\",\n      \"description\": \"Built ML platform for customer behavior analysis\",\n      \"technologies\": [\"Python\", \"TensorFlow\", \"PostgreSQL\"]\n    }\n  ]\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/resumes/generate",
+              "raw": "{{base_url}}/api/v1/resume/generate?job_id={{test_job_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "resumes", "generate"]
+              "path": ["api", "v1", "resume", "generate"],
+              "query": [
+                {
+                  "key": "job_id",
+                  "value": "{{test_job_id}}"
+                }
+              ]
             }
           },
           "response": []
         },
         {
-          "name": "Get Resume by ID",
+          "name": "Generate Resume without Job ID",
           "request": {
-            "method": "GET",
-            "header": [],
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"phone\": \"+1-555-987-6543\",\n  \"location\": \"New York, NY\",\n  \"email\": \"jane.smith@email.com\",\n  \"projects\": [\n    {\n      \"title\": \"E-commerce Microservices Platform\",\n      \"description\": \"Scalable microservices architecture for e-commerce\",\n      \"technologies\": [\"Node.js\", \"React\", \"Docker\", \"Kubernetes\"]\n    },\n    {\n      \"title\": \"Real-time Analytics Dashboard\",\n      \"description\": \"Interactive dashboard for business intelligence\",\n      \"technologies\": [\"Python\", \"Streamlit\", \"PostgreSQL\"]\n    }\n  ]\n}"
+            },
             "url": {
-              "raw": "{{base_url}}/api/v1/resumes/123e4567-e89b-12d3-a456-426614174000",
+              "raw": "{{base_url}}/api/v1/resume/generate",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "resumes", "123e4567-e89b-12d3-a456-426614174000"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Download Resume PDF",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/resumes/123e4567-e89b-12d3-a456-426614174000/download",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "resumes", "123e4567-e89b-12d3-a456-426614174000", "download"]
+              "path": ["api", "v1", "resume", "generate"]
             }
           },
           "response": []
@@ -362,12 +683,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"user_id\": \"123e4567-e89b-12d3-a456-426614174001\",\n  \"resume_summary\": \"Experienced React developer with 3+ years building scalable web applications\"\n}"
+              "raw": "{\n  \"user_id\": \"{{test_user_id}}\",\n  \"resume_summary\": \"Experienced Machine Learning Engineer with 5+ years building scalable AI systems and data pipelines. Expertise in Python, TensorFlow, and cloud deployment.\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/cover-letters/123e4567-e89b-12d3-a456-426614174000",
+              "raw": "{{base_url}}/api/v1/cover-letters/{{test_job_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "cover-letters", "123e4567-e89b-12d3-a456-426614174000"]
+              "path": ["api", "v1", "cover-letters", "{{test_job_id}}"]
             }
           },
           "response": []
@@ -378,9 +699,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/cover-letters/123e4567-e89b-12d3-a456-426614174000",
+              "raw": "{{base_url}}/api/v1/cover-letters/{{test_job_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "cover-letters", "123e4567-e89b-12d3-a456-426614174000"]
+              "path": ["api", "v1", "cover-letters", "{{test_job_id}}"]
             }
           },
           "response": []
@@ -391,9 +712,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/cover-letters/123e4567-e89b-12d3-a456-426614174000/download",
+              "raw": "{{base_url}}/api/v1/cover-letters/{{test_job_id}}/download",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "cover-letters", "123e4567-e89b-12d3-a456-426614174000", "download"]
+              "path": ["api", "v1", "cover-letters", "{{test_job_id}}", "download"]
             }
           },
           "response": []

@@ -12,8 +12,6 @@ from datetime import datetime, timezone
 
 from app.database.base import get_db
 from app.services.project_service import ProjectService
-from app.services.matching.TFIDF_matcher import TFIDFProjectMatcher
-from app.services.matching.cache_service import MatchingCacheService
 router = APIRouter()
 
 class ProjectCreateRequest(BaseModel):
@@ -23,7 +21,6 @@ class ProjectCreateRequest(BaseModel):
     technologies: List[str]
     category: str  # e.g., "Web Development", "Machine Learning", "Mobile App"
     project_url: Optional[str] = None  # GitHub, demo link
-    status: Optional[str] = "Completed"  # In Progress, Completed, Paused
     achievments: Optional[Dict[str, Any]] = {}  # Performance metrics, user counts, etc.
     skills_demonstrated: Optional[List[str]] = []  # Skills this project showcases
     
@@ -34,9 +31,6 @@ class ProjectUpdateRequest(BaseModel):
     technologies: Optional[List[str]] = None
     category: Optional[str] = None
     project_url: Optional[str] = None
-    status: Optional[str] = None
-
-    metrics: Optional[Dict[str, Any]] = None
     skills_demonstrated: Optional[List[str]] = None
 
 class ProjectResponse(BaseModel):
@@ -53,7 +47,7 @@ class ProjectResponse(BaseModel):
     updated_at: str
     user_id: str
 
-class ProjectMatchingRequest(BaseModel):
+
     """Request model for project matching."""
     job_description: str
     job_title: str
@@ -99,11 +93,11 @@ async def create_project(
         logger.error(f"Error creating project: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create project: {str(e)}")
 
+#working properly!!
 @router.get("/", response_model=List[ProjectResponse])
 async def get_projects(
     user_id: str = Query(..., description="User ID"),
     category: Optional[str] = Query(None, description="Filter by category"),
-    status: Optional[str] = Query(None, description="Filter by status"),
     technology: Optional[str] = Query(None, description="Filter by technology"),
     limit: int = Query(50, description="Maximum number of projects to return"),
     offset: int = Query(0, description="Number of projects to skip"),
@@ -118,8 +112,6 @@ async def get_projects(
         filters = {}
         if category:
             filters["category"] = category
-        if status:
-            filters["status"] = status
         if technology:
             filters["technology"] = technology
             
@@ -129,18 +121,16 @@ async def get_projects(
         
         return [
             ProjectResponse(
-                id=project.id,
+                id=str(project.id),
                 title=project.title,
                 description=project.description,
                 technologies=project.technologies or [],
                 category=project.category,
                 project_url=project.project_url,
-                status=project.status,
-                metrics=project.metrics or {},
                 skills_demonstrated=project.skills_demonstrated or [],
                 created_at=project.created_at.isoformat(),
                 updated_at=project.updated_at.isoformat(),
-                user_id=project.user_id
+                user_id=str(project.user_id)
             )
             for project in projects
         ]
@@ -166,18 +156,16 @@ async def get_project(
             raise HTTPException(status_code=404, detail="Project not found")
         
         return ProjectResponse(
-            id=project.id,
+            id=str(project.id),
             title=project.title,
             description=project.description,
             technologies=project.technologies or [],
             category=project.category,
             project_url=project.project_url,
-            status=project.status,
-            metrics=project.metrics or {},
             skills_demonstrated=project.skills_demonstrated or [],
             created_at=project.created_at.isoformat(),
             updated_at=project.updated_at.isoformat(),
-            user_id=project.user_id
+            user_id=str(project.user_id)
         )
         
     except HTTPException:
@@ -208,17 +196,16 @@ async def update_project(
             raise HTTPException(status_code=404, detail="Project not found")
         
         return ProjectResponse(
-            id=project.id,
+            id=str(project.id),
             title=project.title,
             description=project.description,
             technologies=project.technologies or [],
             category=project.category,
             project_url=project.project_url,
-            status=project.status,
             skills_demonstrated=project.skills_demonstrated or [],
             created_at=project.created_at.isoformat(),
             updated_at=project.updated_at.isoformat(),
-            user_id=project.user_id
+            user_id=str(project.user_id)
         )
         
     except HTTPException:
@@ -253,59 +240,6 @@ async def delete_project(
     except Exception as e:
         logger.error(f"Error deleting project {project_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to delete project: {str(e)}")
-
-@router.post("/match", response_model=List[ProjectResponse])
-async def match_projects_to_job(
-    request: ProjectMatchingRequest,
-    user_id: str = Query(..., description="User ID"),
-    db: Session = Depends(get_db)
-):
-    """Match user's projects to a specific job based on relevance."""
-    try:
-        logger.info(f"Matching projects for user {user_id} to job: {request.job_title}")
-        
-        project_service = ProjectService(db)
-        matching_service = ProjectMatchingService()
-        
-        # Get all user projects
-        all_projects = project_service.get_user_projects(user_id)
-        
-        if not all_projects:
-            return []
-        
-        # Calculate relevance scores and match projects
-        matched_projects = matching_service.match_projects_to_job(
-            projects=all_projects,
-            job_description=request.job_description,
-            job_title=request.job_title,
-            required_skills=request.required_skills,
-            preferred_skills=request.preferred_skills or [],
-            job_category=request.job_category,
-            max_projects=request.max_projects
-        )
-        
-        # Convert to response format with relevance scores
-        return [
-            ProjectResponse(
-                id=project.id,
-                title=project.title,
-                description=project.description,
-                technologies=project.technologies or [],
-                category=project.category,
-                project_url=project.project_url,
-                status=project.status,
-                skills_demonstrated=project.skills_demonstrated or [],
-                relevance_score=score,
-                created_at=project.created_at.isoformat(),
-                updated_at=project.updated_at.isoformat(),
-                user_id=project.user_id
-            )
-            for project, score in matched_projects
-        ]
-        
-    except Exception as e:
-        logger.error(f"Error matching projects: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to match projects: {str(e)}")
 
 @router.get("/categories/list")
 async def get_project_categories():

@@ -16,14 +16,28 @@ class ProjectService:
     def create_project(self, project_data: Dict[str, Any]) -> Project:
         """Create a new project using existing database fields only."""
         
+        # Handle achievements properly
+        achievements_data = project_data.get("achievments", [])
+        if isinstance(achievements_data, dict):
+            # If it's a dict (like in your JSON), extract meaningful values or convert to list
+            achievements_list = []
+            for key, value in achievements_data.items():
+                if isinstance(value, list):
+                    achievements_list.extend(value)
+                else:
+                    achievements_list.append(f"{key}: {value}")
+        else:
+            achievements_list = achievements_data if isinstance(achievements_data, list) else []
+        
         project = Project(
             user_id=project_data["user_id"],
             title=project_data["title"],
             description=project_data["description"],
-            project_type=project_data.get("category"),  # Map category to project_type
+            project_type=project_data.get("category"),
+            category=project_data.get("category"),
             technologies=project_data.get("technologies", []),
-            skills_demonstrated=project_data.get("skills_demonstrated", []),
-            achievements=project_data.get("achievments", []),  # Note: typo in your JSON
+            achievements=achievements_list,  # ✅ FIXED: Process achievements properly
+            skills_demonstrated=project_data.get("skills_demonstrated", []),  # ✅ FIXED: Use correct field
             project_url=project_data.get("project_url") or project_data.get("url")
         )
         
@@ -32,6 +46,7 @@ class ProjectService:
         self.db.refresh(project)
         
         return project
+
     
     def get_user_projects(
         self, 
