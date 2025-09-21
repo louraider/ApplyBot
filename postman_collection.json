@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Job Application System API - Complete Collection",
-    "description": "Comprehensive API collection for testing the Job Application System with all endpoints including project matching, filtering, and enhanced CRUD operations",
-    "version": "2.0.0",
+    "name": "Job Application System API - Complete Collection with Bulk Resume",
+    "description": "Comprehensive API collection for testing the Job Application System with all endpoints including project matching, filtering, enhanced CRUD operations, and BULK RESUME GENERATION",
+    "version": "3.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -24,6 +24,11 @@
     {
       "key": "test_job_id",
       "value": "{{$randomUUID}}",
+      "type": "string"
+    },
+    {
+      "key": "created_resume_id",
+      "value": "",
       "type": "string"
     }
   ],
@@ -530,6 +535,23 @@
       "item": [
         {
           "name": "Get All Jobs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.json() && pm.response.json().length > 0) {",
+                  "    pm.collectionVariables.set(\"available_job_id\", pm.response.json()[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -604,9 +626,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/jobs/{{test_job_id}}",
+              "raw": "{{base_url}}/api/v1/jobs/{{available_job_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "jobs", "{{test_job_id}}"]
+              "path": ["api", "v1", "jobs", "{{available_job_id}}"]
             }
           },
           "response": []
@@ -614,30 +636,47 @@
       ]
     },
     {
-      "name": "Resumes",
+      "name": "🚀 Bulk Resume Generation",
       "item": [
         {
-          "name": "Generate Resume with Job ID",
+          "name": "🧪 Test Complete Bulk Resume Flow",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Bulk test completed successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.message).to.include(\"completed successfully\");",
+                  "});",
+                  "",
+                  "if (pm.response.json().bulk_generation_result && pm.response.json().bulk_generation_result.download_urls) {",
+                  "    var downloadUrls = pm.response.json().bulk_generation_result.download_urls;",
+                  "    if (downloadUrls.length > 0) {",
+                  "        pm.collectionVariables.set(\"bulk_resume_id\", downloadUrls[0].resume_id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"John Doe\",\n  \"phone\": \"+1-555-123-4567\",\n  \"location\": \"San Francisco, CA\",\n  \"email\": \"john.doe@email.com\",\n  \"projects\": [\n    {\n      \"title\": \"AI Customer Analytics Platform\",\n      \"description\": \"Built ML platform for customer behavior analysis\",\n      \"technologies\": [\"Python\", \"TensorFlow\", \"PostgreSQL\"]\n    }\n  ]\n}"
-            },
+            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/resume/generate?job_id={{test_job_id}}",
+              "raw": "{{base_url}}/api/v1/resume/test-bulk-flow?user_id={{test_user_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "resume", "generate"],
+              "path": ["api", "v1", "resume", "test-bulk-flow"],
               "query": [
                 {
-                  "key": "job_id",
-                  "value": "{{test_job_id}}"
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
                 }
               ]
             }
@@ -645,7 +684,84 @@
           "response": []
         },
         {
-          "name": "Generate Resume without Job ID",
+          "name": "Get Recommended Jobs for Bulk Resume",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.json().recommended_jobs && pm.response.json().recommended_jobs.length >= 3) {",
+                  "    var jobs = pm.response.json().recommended_jobs;",
+                  "    pm.collectionVariables.set(\"bulk_job_1\", jobs[0].job_id);",
+                  "    pm.collectionVariables.set(\"bulk_job_2\", jobs[1].job_id);",
+                  "    pm.collectionVariables.set(\"bulk_job_3\", jobs[2].job_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume/jobs/recommended/{{test_user_id}}?limit=6&keywords=Python,Machine Learning,Data Science",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resume", "jobs", "recommended", "{{test_user_id}}"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "6"
+                },
+                {
+                  "key": "keywords",
+                  "value": "Python,Machine Learning,Data Science"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "🎯 Generate Bulk Resumes for Multiple Jobs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Bulk resumes generated successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.resumes_generated).to.be.an('array');",
+                  "    pm.expect(jsonData.download_urls).to.be.an('array');",
+                  "});",
+                  "",
+                  "console.log(\"📊 Bulk Resume Results:\");",
+                  "var result = pm.response.json();",
+                  "console.log(`✅ Success: ${result.success}`);",
+                  "console.log(`📝 Generated: ${result.total_jobs} jobs processed`);",
+                  "console.log(`📈 Success Rate: ${result.processing_summary.success_rate}`);",
+                  "",
+                  "if (result.download_urls && result.download_urls.length > 0) {",
+                  "    console.log(\"🔗 Download URLs:\");",
+                  "    result.download_urls.forEach((resume, index) => {",
+                  "        console.log(`${index + 1}. ${resume.job_title} at ${resume.job_company} - Match: ${resume.match_score}`);",
+                  "        console.log(`   URL: ${resume.download_url}`);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -656,12 +772,162 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"phone\": \"+1-555-987-6543\",\n  \"location\": \"New York, NY\",\n  \"email\": \"jane.smith@email.com\",\n  \"projects\": [\n    {\n      \"title\": \"E-commerce Microservices Platform\",\n      \"description\": \"Scalable microservices architecture for e-commerce\",\n      \"technologies\": [\"Node.js\", \"React\", \"Docker\", \"Kubernetes\"]\n    },\n    {\n      \"title\": \"Real-time Analytics Dashboard\",\n      \"description\": \"Interactive dashboard for business intelligence\",\n      \"technologies\": [\"Python\", \"Streamlit\", \"PostgreSQL\"]\n    }\n  ]\n}"
+              "raw": "{\n  \"job_ids\": [\"{{bulk_job_1}}\", \"{{bulk_job_2}}\", \"{{bulk_job_3}}\"],\n  \"name\": \"John Doe (Bulk Test)\",\n  \"phone\": \"+91-9876543210\",\n  \"location\": \"Bangalore, India\",\n  \"email\": \"john.doe@example.com\",\n  \"linkedin_url\": \"https://linkedin.com/in/johndoe\",\n  \"website_url\": \"https://johndoe.dev\",\n  \"experience_years\": \"3+\",\n  \"primary_skills\": [\"Python\", \"Machine Learning\", \"Data Science\", \"FastAPI\", \"TensorFlow\"],\n  \"education\": [\n    {\n      \"degree\": \"B.Tech Computer Science\",\n      \"institution\": \"Indian Institute of Technology\",\n      \"year\": \"2022\",\n      \"coursework\": \"Machine Learning, Data Structures, Software Engineering\",\n      \"gpa\": \"8.5/10\"\n    }\n  ],\n  \"skills\": [\n    {\n      \"category\": \"Programming Languages\",\n      \"items\": [\"Python\", \"JavaScript\", \"Java\", \"SQL\", \"R\"]\n    },\n    {\n      \"category\": \"Machine Learning\",\n      \"items\": [\"TensorFlow\", \"PyTorch\", \"Scikit-learn\", \"Pandas\", \"NumPy\"]\n    },\n    {\n      \"category\": \"Web Development\",\n      \"items\": [\"FastAPI\", \"React\", \"Node.js\", \"PostgreSQL\", \"Docker\"]\n    },\n    {\n      \"category\": \"Cloud & DevOps\",\n      \"items\": [\"AWS\", \"Docker\", \"Kubernetes\", \"Git\", \"CI/CD\"]\n    }\n  ],\n  \"experience\": [\n    {\n      \"role\": \"ML Engineering Intern\",\n      \"company\": \"TechCorp AI\",\n      \"duration\": \"June 2024 - Present\",\n      \"location\": \"Bangalore, India\",\n      \"achievements\": [\n        \"Developed and deployed 3 ML models improving prediction accuracy by 25%\",\n        \"Built data pipelines processing 1M+ records daily using Python and Apache Kafka\",\n        \"Created RESTful APIs with FastAPI serving 10K+ requests per day\",\n        \"Collaborated with cross-functional teams to integrate ML solutions into production\"\n      ]\n    }\n  ],\n  \"extra_curricular\": [\n    \"Technical Lead at College AI/ML Club - Organized 5 workshops on machine learning\",\n    \"Published 3 research papers on deep learning in college journal\",\n    \"Winner of National Level Hackathon on AI for Social Good (2023)\"\n  ],\n  \"leadership\": [\n    \"Led team of 8 developers in building college fest management system\",\n    \"Mentored 15+ junior students in programming and machine learning concepts\",\n    \"Organized and conducted Python programming workshop for 100+ students\"\n  ],\n  \"max_projects_per_resume\": 4,\n  \"algorithm\": \"tfidf\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume/bulk-generate?user_id={{test_user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resume", "bulk-generate"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Download Bulk Generated Resume",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume/download/{{bulk_resume_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resume", "download", "{{bulk_resume_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Resumes - Individual Generation",
+      "item": [
+        {
+          "name": "Generate Resume with Job Context",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Resume generated successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.resume_id).to.exist;",
+                  "    pm.collectionVariables.set(\"created_resume_id\", jsonData.resume_id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"phone\": \"+91-9876543210\",\n  \"location\": \"Bangalore, India\",\n  \"email\": \"john.doe@example.com\",\n  \"linkedin_url\": \"https://linkedin.com/in/johndoe\",\n  \"website_url\": \"https://johndoe.dev\",\n  \"experience_years\": \"3+\",\n  \"primary_skills\": [\"Python\", \"Machine Learning\", \"FastAPI\"],\n  \"projects\": [\n    {\n      \"title\": \"AI Customer Analytics Platform\",\n      \"description\": \"Built ML platform for customer behavior analysis using Python, TensorFlow, and real-time data processing\",\n      \"technologies\": [\"Python\", \"TensorFlow\", \"PostgreSQL\", \"Apache Kafka\", \"Docker\"]\n    },\n    {\n      \"title\": \"E-commerce Microservices Platform\",\n      \"description\": \"Scalable microservices architecture serving 100K+ users with 99.95% uptime\",\n      \"technologies\": [\"Node.js\", \"React\", \"Docker\", \"Kubernetes\", \"PostgreSQL\"]\n    }\n  ],\n  \"education\": [\n    {\n      \"degree\": \"B.Tech Computer Science\",\n      \"institution\": \"Indian Institute of Technology\",\n      \"year\": \"2022\",\n      \"gpa\": \"8.5/10\"\n    }\n  ],\n  \"skills\": [\n    {\n      \"category\": \"Programming\",\n      \"items\": [\"Python\", \"JavaScript\", \"Java\", \"SQL\"]\n    },\n    {\n      \"category\": \"Machine Learning\",\n      \"items\": [\"TensorFlow\", \"PyTorch\", \"Scikit-learn\"]\n    }\n  ],\n  \"job_id\": \"{{available_job_id}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/resume/generate",
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "resume", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Resume without Job Context",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"phone\": \"+91-9876543210\",\n  \"location\": \"Mumbai, India\",\n  \"email\": \"jane.smith@example.com\",\n  \"experience_years\": \"2+\",\n  \"primary_skills\": [\"React\", \"Node.js\", \"MongoDB\"],\n  \"projects\": [\n    {\n      \"title\": \"E-commerce Dashboard\",\n      \"description\": \"Admin dashboard for e-commerce management\",\n      \"technologies\": [\"React\", \"Node.js\", \"MongoDB\", \"Express\"]\n    }\n  ],\n  \"education\": [\n    {\n      \"degree\": \"B.E. Information Technology\",\n      \"institution\": \"Mumbai University\",\n      \"year\": \"2023\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resume", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Download Resume",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume/download/{{created_resume_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resume", "download", "{{created_resume_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List All Resumes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume/list?limit=20&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resume", "list"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Resume Generator Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resume", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Resume Template Structure",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/resume/template",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resume", "template"]
             }
           },
           "response": []
@@ -686,9 +952,9 @@
               "raw": "{\n  \"user_id\": \"{{test_user_id}}\",\n  \"resume_summary\": \"Experienced Machine Learning Engineer with 5+ years building scalable AI systems and data pipelines. Expertise in Python, TensorFlow, and cloud deployment.\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/cover-letters/{{test_job_id}}",
+              "raw": "{{base_url}}/api/v1/cover-letters/{{available_job_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "cover-letters", "{{test_job_id}}"]
+              "path": ["api", "v1", "cover-letters", "{{available_job_id}}"]
             }
           },
           "response": []
@@ -699,9 +965,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/cover-letters/{{test_job_id}}",
+              "raw": "{{base_url}}/api/v1/cover-letters/{{available_job_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "cover-letters", "{{test_job_id}}"]
+              "path": ["api", "v1", "cover-letters", "{{available_job_id}}"]
             }
           },
           "response": []
@@ -712,9 +978,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/cover-letters/{{test_job_id}}/download",
+              "raw": "{{base_url}}/api/v1/cover-letters/{{available_job_id}}/download",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "cover-letters", "{{test_job_id}}", "download"]
+              "path": ["api", "v1", "cover-letters", "{{available_job_id}}", "download"]
             }
           },
           "response": []
