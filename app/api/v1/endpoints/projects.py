@@ -12,8 +12,8 @@ from datetime import datetime, timezone
 
 from app.database.base import get_db
 from app.services.project_service import ProjectService
-from app.services.project_service import ProjectMatchingService
-
+from app.services.matching.TFIDF_matcher import TFIDFProjectMatcher
+from app.services.matching.cache_service import MatchingCacheService
 router = APIRouter()
 
 class ProjectCreateRequest(BaseModel):
@@ -22,13 +22,9 @@ class ProjectCreateRequest(BaseModel):
     description: str
     technologies: List[str]
     category: str  # e.g., "Web Development", "Machine Learning", "Mobile App"
-    difficulty_level: Optional[str] = "Intermediate"  # Beginner, Intermediate, Advanced
-    duration: Optional[str] = None  # e.g., "3 months", "6 weeks"
-    team_size: Optional[int] = 1
-    url: Optional[str] = None  # GitHub, demo link
+    project_url: Optional[str] = None  # GitHub, demo link
     status: Optional[str] = "Completed"  # In Progress, Completed, Paused
-    highlights: Optional[List[str]] = []  # Key achievements/features
-    metrics: Optional[Dict[str, Any]] = {}  # Performance metrics, user counts, etc.
+    achievments: Optional[Dict[str, Any]] = {}  # Performance metrics, user counts, etc.
     skills_demonstrated: Optional[List[str]] = []  # Skills this project showcases
     
 class ProjectUpdateRequest(BaseModel):
@@ -37,12 +33,9 @@ class ProjectUpdateRequest(BaseModel):
     description: Optional[str] = None
     technologies: Optional[List[str]] = None
     category: Optional[str] = None
-    difficulty_level: Optional[str] = None
-    duration: Optional[str] = None
-    team_size: Optional[int] = None
-    url: Optional[str] = None
+    project_url: Optional[str] = None
     status: Optional[str] = None
-    highlights: Optional[List[str]] = None
+
     metrics: Optional[Dict[str, Any]] = None
     skills_demonstrated: Optional[List[str]] = None
 
@@ -53,13 +46,7 @@ class ProjectResponse(BaseModel):
     description: str
     technologies: List[str]
     category: str
-    difficulty_level: str
-    duration: Optional[str]
-    team_size: int
-    url: Optional[str]
-    status: str
-    highlights: List[str]
-    metrics: Dict[str, Any]
+    project_url: Optional[str]
     skills_demonstrated: List[str]
     relevance_score: Optional[float] = None  # For job matching
     created_at: str
@@ -96,22 +83,16 @@ async def create_project(
         project = project_service.create_project(project_data)
         
         return ProjectResponse(
-            id=project.id,
+            id=str(project.id),
             title=project.title,
             description=project.description,
             technologies=project.technologies or [],
-            category=project.category,
-            difficulty_level=project.difficulty_level,
-            duration=project.duration,
-            team_size=project.team_size,
-            url=project.url,
-            status=project.status,
-            highlights=project.highlights or [],
-            metrics=project.metrics or {},
+            category=project.category or "Other",
+            project_url=project.project_url,
             skills_demonstrated=project.skills_demonstrated or [],
             created_at=project.created_at.isoformat(),
             updated_at=project.updated_at.isoformat(),
-            user_id=project.user_id
+            user_id=str(project.user_id)
         )
         
     except Exception as e:
@@ -153,12 +134,8 @@ async def get_projects(
                 description=project.description,
                 technologies=project.technologies or [],
                 category=project.category,
-                difficulty_level=project.difficulty_level,
-                duration=project.duration,
-                team_size=project.team_size,
-                url=project.url,
+                project_url=project.project_url,
                 status=project.status,
-                highlights=project.highlights or [],
                 metrics=project.metrics or {},
                 skills_demonstrated=project.skills_demonstrated or [],
                 created_at=project.created_at.isoformat(),
@@ -194,12 +171,8 @@ async def get_project(
             description=project.description,
             technologies=project.technologies or [],
             category=project.category,
-            difficulty_level=project.difficulty_level,
-            duration=project.duration,
-            team_size=project.team_size,
-            url=project.url,
+            project_url=project.project_url,
             status=project.status,
-            highlights=project.highlights or [],
             metrics=project.metrics or {},
             skills_demonstrated=project.skills_demonstrated or [],
             created_at=project.created_at.isoformat(),
@@ -240,13 +213,8 @@ async def update_project(
             description=project.description,
             technologies=project.technologies or [],
             category=project.category,
-            difficulty_level=project.difficulty_level,
-            duration=project.duration,
-            team_size=project.team_size,
-            url=project.url,
+            project_url=project.project_url,
             status=project.status,
-            highlights=project.highlights or [],
-            metrics=project.metrics or {},
             skills_demonstrated=project.skills_demonstrated or [],
             created_at=project.created_at.isoformat(),
             updated_at=project.updated_at.isoformat(),
@@ -324,13 +292,8 @@ async def match_projects_to_job(
                 description=project.description,
                 technologies=project.technologies or [],
                 category=project.category,
-                difficulty_level=project.difficulty_level,
-                duration=project.duration,
-                team_size=project.team_size,
-                url=project.url,
+                project_url=project.project_url,
                 status=project.status,
-                highlights=project.highlights or [],
-                metrics=project.metrics or {},
                 skills_demonstrated=project.skills_demonstrated or [],
                 relevance_score=score,
                 created_at=project.created_at.isoformat(),

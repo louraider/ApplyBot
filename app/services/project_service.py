@@ -1,36 +1,30 @@
 """
-Project service for database operations.
+Project service - simplified for existing database schema.
 """
 
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
-from app.models import Project
+from app.models.project import Project
 from datetime import datetime, timezone
 from loguru import logger
+
 
 class ProjectService:
     def __init__(self, db: Session):
         self.db = db
     
     def create_project(self, project_data: Dict[str, Any]) -> Project:
-        """Create a new project."""
+        """Create a new project using existing database fields only."""
+        
         project = Project(
-            id=project_data["id"],
             user_id=project_data["user_id"],
             title=project_data["title"],
             description=project_data["description"],
+            project_type=project_data.get("category"),  # Map category to project_type
             technologies=project_data.get("technologies", []),
-            category=project_data["category"],
-            difficulty_level=project_data.get("difficulty_level", "Intermediate"),
-            duration=project_data.get("duration"),
-            team_size=project_data.get("team_size", 1),
-            url=project_data.get("url"),
-            status=project_data.get("status", "Completed"),
-            highlights=project_data.get("highlights", []),
-            metrics=project_data.get("metrics", {}),
             skills_demonstrated=project_data.get("skills_demonstrated", []),
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc)
+            achievements=project_data.get("achievments", []),  # Note: typo in your JSON
+            project_url=project_data.get("project_url") or project_data.get("url")
         )
         
         self.db.add(project)
@@ -46,14 +40,12 @@ class ProjectService:
         limit: int = 50,
         offset: int = 0
     ) -> List[Project]:
-        """Get all projects for a user with optional filtering."""
+        """Get all projects for a user."""
         query = self.db.query(Project).filter(Project.user_id == user_id)
         
         if filters:
-            if "category" in filters:
-                query = query.filter(Project.category == filters["category"])
-            if "status" in filters:
-                query = query.filter(Project.status == filters["status"])
+            if "project_type" in filters:
+                query = query.filter(Project.project_type == filters["project_type"])
             if "technology" in filters:
                 query = query.filter(Project.technologies.contains([filters["technology"]]))
         
@@ -79,7 +71,8 @@ class ProjectService:
             return None
         
         for key, value in update_data.items():
-            setattr(project, key, value)
+            if hasattr(project, key):  # Only update existing fields
+                setattr(project, key, value)
         
         project.updated_at = datetime.now(timezone.utc)
         

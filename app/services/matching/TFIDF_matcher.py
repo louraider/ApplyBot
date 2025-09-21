@@ -118,7 +118,6 @@ class TFIDFProjectMatcher(BaseProjectMatcher):
                 project.category or "",
                 " ".join(project.technologies or []),
                 " ".join(project.skills_demonstrated or []),
-                " ".join(project.highlights or [])
             ]
             
             document = " ".join(text_parts).lower()
@@ -191,7 +190,7 @@ class TFIDFProjectMatcher(BaseProjectMatcher):
         
         results = []
         for project in projects:
-            project_text = f"{project.title} {project.description} {' '.join(project.highlights or [])}"
+            project_text = f"{project.title} {project.description} "
             project_keywords = self._extract_keywords(project_text)
             
             # Find matching keywords
