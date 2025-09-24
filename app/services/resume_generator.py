@@ -1,5 +1,6 @@
 """
-Resume generation service with LaTeX and fallback PDF generators.
+Production-ready resume generation service.
+Supports LaTeX and ReportLab PDF generation with proper error handling.
 """
 
 import os
@@ -13,53 +14,40 @@ from loguru import logger
 import uuid
 from datetime import datetime
 
-# Fallback PDF generators
 try:
     from reportlab.lib.pagesizes import letter
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
     from reportlab.lib import colors
     REPORTLAB_AVAILABLE = True
 except ImportError:
     REPORTLAB_AVAILABLE = False
-    logger.warning("ReportLab not available - LaTeX will be required for PDF generation")
-
-try:
-    import weasyprint
-    WEASYPRINT_AVAILABLE = True
-except ImportError:
-    WEASYPRINT_AVAILABLE = False
-    logger.warning("WeasyPrint not available - using ReportLab or LaTeX fallback")
+    logger.warning("ReportLab not installed - only LaTeX generation available")
 
 
 class ResumeGenerationError(Exception):
-    """Custom exception for resume generation errors."""
+    """Raised when resume generation fails."""
     pass
 
 
 class ResumeGenerator:
-    """Resume generator with LaTeX primary and fallback PDF generators."""
+    """Production resume generator with multiple PDF backends."""
     
     def __init__(self):
         self.template_dir = Path("app/templates")
         self.output_dir = Path("app/generated/resumes")
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Set up Jinja2 environment
         self.jinja_env = Environment(
             loader=FileSystemLoader(str(self.template_dir)),
             trim_blocks=True,
             lstrip_blocks=True
         )
         
-        # Check LaTeX availability
         self.latex_available = self._check_latex_availability()
         
-        logger.info(f"Resume generator initialized:")
-        logger.info(f"  LaTeX available: {self.latex_available}")
-        logger.info(f"  ReportLab available: {REPORTLAB_AVAILABLE}")
-        logger.info(f"  WeasyPrint available: {WEASYPRINT_AVAILABLE}")
+        logger.info(f"Resume generator ready - LaTeX: {self.latex_available}, ReportLab: {REPORTLAB_AVAILABLE}")
     
     def _check_latex_availability(self) -> bool:
         """Check if LaTeX (pdflatex) is available on the system."""

@@ -1,0 +1,22 @@
+September 22, 2025
+
+Alex Johnson
+Seattle, WA
+alex.johnson@example.com
++1(555) 987-6543
+
+Hiring Manager
+InnovateTech Corp
+
+Dear Hiring Manager,
+
+I am writing to express my strong interest in the Senior Python Developer position at InnovateTech Corp. With 4+ years of experience in software development and expertise in Python, React, PostgreSQL, I am excited about the opportunity to contribute to your team.
+
+In my previous roles, I have successfully delivered projects that align well with your requirements, particularly in python, postgresql, docker. For example, my E-commerce Analytics Platform project, where built a real-time analytics platform for e-commerce businesses using python, fastapi, and react. processes 1m+ events daily with sub-second latency. f, demonstrating my ability to build robust solutions that drive business value.
+
+What particularly attracts me to InnovateTech Corp is your commitment to innovation and technical excellence. I am eager to bring my passion for clean code, problem-solving, and collaborative development to help InnovateTech Corp achieve its goals.
+
+I would welcome the opportunity to discuss how my experience and enthusiasm can contribute to your team. Thank you for considering my application.
+
+Sincerely,
+Alex Johnson

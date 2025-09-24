@@ -1,103 +1,25 @@
-"""
-Resume generation endpoints with job-specific file organization and bulk resume generation.
-"""
-
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel
+from typing import List
 from loguru import logger
-import os
-from pathlib import Path
-import uuid
-from datetime import datetime, timezone
 
 from app.database.base import get_db
+from app.schemas.resume import (
+    ResumeGenerationRequest, 
+    BulkResumeRequest,
+    ResumeResponse, 
+    BulkResumeResponse
+)
 from app.services.resume_generator import resume_generator, ResumeGenerationError
-from app.services.project_service import ProjectService
-from app.services.job_service import JobService
+from app.services.resume_helpers import (
+    get_job_context, 
+    filter_projects_by_ids, 
+    validate_resume_request,
+    prepare_resume_data
+)
 
 router = APIRouter()
-
-class EducationItem(BaseModel):
-    """Education item model."""
-    degree: str
-    institution: str
-    year: str
-    coursework: Optional[str] = None
-    gpa: Optional[str] = None
-
-class SkillCategory(BaseModel):
-    """Skill category model."""
-    category: str
-    items: List[str]
-
-class ExperienceItem(BaseModel):
-    """Experience item model."""
-    role: str
-    company: str
-    duration: str
-    location: str
-    achievements: List[str]
-
-class ProjectItem(BaseModel):
-    """Project item model."""
-    title: str
-    description: str
-    technologies: Optional[List[str]] = None
-    url: Optional[str] = None
-
-class ResumeGenerationRequest(BaseModel):
-    """Request model for resume generation."""
-    
-    # Personal Information
-    name: str
-    phone: str
-    location: str
-    email: str
-    linkedin_url: Optional[str] = None
-    linkedin_display: Optional[str] = None
-    website_url: Optional[str] = None
-    website_display: Optional[str] = None
-    
-    # Professional Information
-    experience_years: Optional[str] = "2+"
-    primary_skills: Optional[List[str]] = ["Software Development"]
-    
-    # Resume Sections
-    education: Optional[List[EducationItem]] = []
-    skills: Optional[List[SkillCategory]] = []
-    experience: Optional[List[ExperienceItem]] = []
-    projects: Optional[List[ProjectItem]] = []
-    extra_curricular: Optional[List[str]] = []
-    leadership: Optional[List[str]] = []
-    
-    # Customization
-    job_id: Optional[str] = None  # For job-specific customization
-    selected_project_ids: Optional[List[str]] = None  # Specific projects to include
-
-class ResumeResponse(BaseModel):
-    """Enhanced response model for resume generation."""
-    success: bool
-    resume_id: str
-    job_id: Optional[str] = None
-    download_url: str
-    template_url: Optional[str] = None
-    generation_method: str
-    file_paths: Optional[Dict[str, Optional[str]]] = None
-    created_at: str
-    user_name: str
-    job_title: Optional[str] = None
-    message: str
-
-class BulkResumeRequest(BaseModel):
-    """Request model for bulk resume generation."""
-    
-    # Job Selection (5-6 job IDs)
-    job_ids: List[str]
-    
-    # User Profile Data
     name: str
     phone: str
     location: str

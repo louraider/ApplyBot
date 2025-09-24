@@ -1,73 +1,77 @@
 """
-Project matching API with explanations and caching.
+Project Matching API Endpoints
+
+ML-powered project matching system with caching and experiment tracking:
+- Match user projects to job requirements using TF-IDF + keyword analysis
+- Confidence scoring with detailed explanations
+- Redis caching for performance optimization
+- MLflow experiment tracking for algorithm monitoring
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 from loguru import logger
+import time
 import uuid
+import os
 
 from app.database.base import get_db
-from app.services.project_service import ProjectService
-from app.services.job_service import JobService
-from app.services.matching.tfidf_matcher import TFIDFProjectMatcher
-from app.services.matching.cache_service import MatchingCacheService
+from app.services.matching.TFIDF_matcher import TFIDFProjectMatcher
 from app.services.matching.base_matcher import JobContext
+from app.services.matching.cache_service import MatchingCacheService
+from app.services.matching.mlflow_tracker import experiment_tracker
+from app.services.job_service import JobService
+from app.services.project_service import ProjectService
 
 router = APIRouter()
 
 # Initialize services
-tfidf_matcher = TFIDFProjectMatcher()
-cache_service = MatchingCacheService()
+matcher = TFIDFProjectMatcher()
+cache_service = MatchingCacheService(
+    redis_url=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+    default_ttl=3600  # 1 hour cache
+)
+
+
+class ProjectMatchRequest(BaseModel):
+    """Request model for project matching."""
+    user_id: uuid.UUID
+    algorithm: Optional[str] = "tfidf"
+    max_results: Optional[int] = 5
+    use_cache: Optional[bool] = True
+
 
 class ProjectMatchResponse(BaseModel):
     """Response model for project matching."""
-    project_id: str
-    project_title: str
-    project_description: str
-    project_technologies: List[str]
-    confidence_score: float
-    explanation: Dict[str, Any]
-    matching_keywords: List[str]
-    similarity_breakdown: Dict[str, float]
-    rank: int
-
-class MatchingResultResponse(BaseModel):
-    """Full response for project matching request."""
     success: bool
     job_id: str
-    job_title: str
-    matched_projects: List[ProjectMatchResponse]
+    user_id: str
     algorithm_used: str
-    algorithm_version: str
-    total_projects_analyzed: int
+    execution_time_ms: float
     cache_hit: bool
-    processing_time_ms: float
-    explanation_summary: Dict[str, Any]
+    matches: List[Dict[str, Any]]
+    explanation: Dict[str, Any]
 
-@router.get("/match/{job_id}", response_model=MatchingResultResponse)
+
+@router.get("/{job_id}", response_model=ProjectMatchResponse)
 async def match_projects_to_job(
     job_id: str,
-    user_id: str = Query(..., description="User ID"),
-    max_results: int = Query(5, ge=1, le=10, description="Maximum results to return"),
-    force_refresh: bool = Query(False, description="Force refresh cache"),
+    user_id: str = Query(..., description="User ID for project matching"),
     algorithm: str = Query("tfidf", description="Matching algorithm to use"),
+    max_results: int = Query(5, description="Maximum number of results"),
+    use_cache: bool = Query(True, description="Whether to use cached results"),
     db: Session = Depends(get_db)
 ):
     """
-    Match user's projects to a specific job with detailed explanations.
-    
-    Returns the top matching projects with confidence scores and explanations
-    of why each project was selected.
+    Match user projects to a specific job using ML algorithms.
+    Returns ranked projects with confidence scores and explanations.
     """
-    
-    import time
     start_time = time.time()
     
     try:
-        logger.info(f"Matching projects for user {user_id} to job {job_id}")
+        logger.info(f"Matching projects for job {job_id}, user {user_id}")
         
         # Get job details
         job_service = JobService(db)
@@ -78,267 +82,191 @@ async def match_projects_to_job(
         
         # Create job context
         job_context = JobContext(
-            job_id=job.id,
+            job_id=job_id,
             title=job.title,
-            description=job.description,
+            description=job.description or "",
             company=job.company,
-            required_skills=job.required_skills or [],
-            preferred_skills=job.preferred_skills or [],
-            category=getattr(job, 'category', None),
+            required_skills=job.requirements or [],
+            preferred_skills=[],  # Could be enhanced
+            category=getattr(job, 'category', 'Software Development'),
             location=job.location
         )
         
-        # Check cache first (unless force refresh)
+        # Check cache first
         cache_hit = False
         cached_results = None
         
-        if not force_refresh:
+        if use_cache:
             cache_key = cache_service.generate_cache_key(
                 user_id=user_id,
                 job_context=job_context,
-                algorithm_name=tfidf_matcher.get_algorithm_name(),
-                algorithm_version=tfidf_matcher.get_algorithm_version()
+                algorithm_name=matcher.get_algorithm_name(),
+                algorithm_version=matcher.get_algorithm_version()
             )
             cached_results = cache_service.get_cached_results(cache_key)
             cache_hit = cached_results is not None
         
         if cached_results:
             # Return cached results
-            processing_time = (time.time() - start_time) * 1000
+            execution_time = (time.time() - start_time) * 1000
             
-            matched_projects = []
-            for i, cached_result in enumerate(cached_results[:max_results]):
-                matched_projects.append(ProjectMatchResponse(
-                    project_id=cached_result['project_id'],
-                    project_title=cached_result['project_title'],
-                    project_description="", # Not cached to save space
-                    project_technologies=[],  # Not cached to save space
-                    confidence_score=cached_result['confidence_score'],
-                    explanation=cached_result['explanation'],
-                    matching_keywords=cached_result['matching_keywords'],
-                    similarity_breakdown=cached_result['similarity_breakdown'],
-                    rank=i + 1
-                ))
-            
-            return MatchingResultResponse(
+            return ProjectMatchResponse(
                 success=True,
                 job_id=job_id,
-                job_title=job.title,
-                matched_projects=matched_projects,
-                algorithm_used=tfidf_matcher.get_algorithm_name(),
-                algorithm_version=tfidf_matcher.get_algorithm_version(),
-                total_projects_analyzed=len(cached_results),
+                user_id=user_id,
+                algorithm_used=matcher.get_algorithm_name(),
+                execution_time_ms=execution_time,
                 cache_hit=True,
-                processing_time_ms=processing_time,
-                explanation_summary=_generate_explanation_summary(matched_projects)
+                matches=cached_results,
+                explanation={
+                    "source": "cache",
+                    "algorithm": matcher.get_algorithm_name(),
+                    "cached_at": cached_results[0].get("cached_at") if cached_results else None
+                }
             )
         
         # Get user projects
         project_service = ProjectService(db)
-        projects = project_service.get_user_projects(user_id)
+        user_projects = project_service.get_projects_by_user_id(user_id)
         
-        if not projects:
-            return MatchingResultResponse(
+        if not user_projects:
+            return ProjectMatchResponse(
                 success=True,
                 job_id=job_id,
-                job_title=job.title,
-                matched_projects=[],
-                algorithm_used=tfidf_matcher.get_algorithm_name(),
-                algorithm_version=tfidf_matcher.get_algorithm_version(),
-                total_projects_analyzed=0,
+                user_id=user_id,
+                algorithm_used=matcher.get_algorithm_name(),
+                execution_time_ms=(time.time() - start_time) * 1000,
                 cache_hit=False,
-                processing_time_ms=(time.time() - start_time) * 1000,
-                explanation_summary={"message": "No projects found for user"}
+                matches=[],
+                explanation={"message": "No projects found for user"}
             )
         
         # Perform matching
-        match_results = tfidf_matcher.match_projects(
-            projects=projects,
+        match_results = matcher.match_projects(
+            projects=user_projects,
             job_context=job_context,
             max_results=max_results
         )
         
-        # Convert to response format
-        matched_projects = []
-        for i, result in enumerate(match_results):
-            matched_projects.append(ProjectMatchResponse(
-                project_id=result.project.id,
-                project_title=result.project.title,
-                project_description=result.project.description or "",
-                project_technologies=result.project.technologies or [],
-                confidence_score=result.confidence_score,
-                explanation=result.explanation,
-                matching_keywords=result.matching_keywords,
-                similarity_breakdown=result.similarity_breakdown,
-                rank=i + 1
-            ))
+        execution_time = (time.time() - start_time) * 1000
         
-        # Cache results in background
-        if not force_refresh:
+        # Convert results to response format
+        matches = []
+        for result in match_results:
+            match_dict = {
+                "project_id": result.project.id,
+                "project_title": result.project.title,
+                "project_description": result.project.description,
+                "confidence_score": result.confidence_score,
+                "confidence_percentage": round(result.confidence_score * 100, 1),
+                "matching_keywords": result.matching_keywords,
+                "explanation": result.explanation,
+                "similarity_breakdown": result.similarity_breakdown
+            }
+            matches.append(match_dict)
+        
+        # Cache results
+        if use_cache and match_results:
             cache_service.cache_results(cache_key, match_results)
         
-        processing_time = (time.time() - start_time) * 1000
+        # Log to MLflow
+        _log_matching_experiment(
+            job_context=job_context,
+            match_results=match_results,
+            execution_time=execution_time / 1000,  # Convert to seconds
+            user_id=user_id
+        )
         
-        return MatchingResultResponse(
+        return ProjectMatchResponse(
             success=True,
             job_id=job_id,
-            job_title=job.title,
-            matched_projects=matched_projects,
-            algorithm_used=tfidf_matcher.get_algorithm_name(),
-            algorithm_version=tfidf_matcher.get_algorithm_version(),
-            total_projects_analyzed=len(projects),
+            user_id=user_id,
+            algorithm_used=matcher.get_algorithm_name(),
+            execution_time_ms=execution_time,
             cache_hit=False,
-            processing_time_ms=processing_time,
-            explanation_summary=_generate_explanation_summary(matched_projects)
+            matches=matches,
+            explanation={
+                "algorithm": matcher.get_algorithm_name(),
+                "version": matcher.get_algorithm_version(),
+                "total_projects_analyzed": len(user_projects),
+                "matching_criteria": "TF-IDF similarity + keyword matching + technology alignment"
+            }
         )
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error in project matching: {e}")
-        import traceback
-        logger.error(f"Full traceback: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=f"Project matching failed: {str(e)}")
+        logger.error(f"Error matching projects: {e}")
+        raise HTTPException(status_code=500, detail="Failed to match projects")
 
-@router.post("/match/bulk")
-async def bulk_match_projects(
-    job_ids: List[str],                           # No default
-    background_tasks: BackgroundTasks,            # No default - MOVED UP
-    user_id: str = Query(..., description="User ID"),  # Has default
-    max_results_per_job: int = Query(3, ge=1, le=5),   # Has default  
-    db: Session = Depends(get_db)                 # Has default
-):
 
-    """
-    Match projects to multiple jobs simultaneously.
-    Useful for testing multiple job applications.
-    """
-    
-    try:
-        logger.info(f"Bulk matching projects for user {user_id} to {len(job_ids)} jobs")
-        
-        if len(job_ids) > 20:
-            raise HTTPException(status_code=400, detail="Maximum 20 jobs allowed per bulk request")
-        
-        results = {}
-        
-        for job_id in job_ids:
-            try:
-                # This would call the single match endpoint logic
-                # For brevity, I'll show the structure
-                results[job_id] = {
-                    "status": "pending",
-                    "message": f"Matching queued for job {job_id}"
-                }
-                
-                # Add background task for processing
-                background_tasks.add_task(
-                    _process_single_match,
-                    job_id=job_id,
-                    user_id=user_id,
-                    max_results=max_results_per_job,
-                    db=db
-                )
-                
-            except Exception as e:
-                results[job_id] = {
-                    "status": "error",
-                    "message": str(e)
-                }
-        
-        return {
-            "success": True,
-            "message": f"Bulk matching initiated for {len(job_ids)} jobs",
-            "results": results
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error in bulk matching: {e}")
-        raise HTTPException(status_code=500, detail=f"Bulk matching failed: {str(e)}")
-
-@router.get("/match/{job_id}/explain")
-async def explain_matching_algorithm(
+@router.post("/{job_id}/explain")
+async def explain_project_match(
     job_id: str,
+    project_id: str = Query(..., description="Project ID to explain"),
     user_id: str = Query(..., description="User ID"),
     db: Session = Depends(get_db)
 ):
-    """
-    Get detailed explanation of how the matching algorithm works
-    and what factors influence project selection.
-    """
+    """Get detailed explanation for why a specific project matches a job."""
     
     try:
+        # Get job and project
         job_service = JobService(db)
+        project_service = ProjectService(db)
+        
         job = job_service.get_job_by_id(job_id)
+        project = project_service.get_project_by_id(project_id)
         
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
         
-        explanation = {
-            "algorithm_name": tfidf_matcher.get_algorithm_name(),
-            "algorithm_version": tfidf_matcher.get_algorithm_version(),
-            "methodology": {
-                "step_1": "TF-IDF Analysis (40% weight)",
-                "step_1_description": "Analyzes semantic similarity between project descriptions and job description using Term Frequency-Inverse Document Frequency",
-                "step_2": "Keyword Matching (35% weight)", 
-                "step_2_description": "Matches important keywords and phrases between project content and job requirements",
-                "step_3": "Technology Alignment (25% weight)",
-                "step_3_description": "Evaluates overlap between project technologies and job required/preferred skills"
-            },
-            "scoring_factors": [
-                "Content similarity (project description vs job description)",
-                "Title relevance (project title vs job title)",
-                "Technology stack overlap",
-                "Required skills coverage",
-                "Project category alignment",
-                "Keyword density and importance"
-            ],
-            "job_analysis": {
-                "job_title": job.title,
-                "identified_keywords": "...",  # Would extract actual keywords
-                "required_technologies": job.required_skills or [],
-                "preferred_technologies": job.preferred_skills or [],
-                "category_hints": "..."  # Would analyze job category
+        # Create job context
+        job_context = JobContext(
+            job_id=job_id,
+            title=job.title,
+            description=job.description or "",
+            company=job.company,
+            required_skills=job.requirements or [],
+            preferred_skills=[],
+            category=getattr(job, 'category', 'Software Development'),
+            location=job.location
+        )
+        
+        # Perform single project match for detailed explanation
+        match_results = matcher.match_projects(
+            projects=[project],
+            job_context=job_context,
+            max_results=1
+        )
+        
+        if not match_results:
+            return {
+                "success": False,
+                "message": "No match found for this project"
             }
-        }
+        
+        result = match_results[0]
         
         return {
             "success": True,
-            "explanation": explanation
+            "job_title": job.title,
+            "project_title": project.title,
+            "confidence_score": result.confidence_score,
+            "confidence_percentage": round(result.confidence_score * 100, 1),
+            "detailed_explanation": result.explanation,
+            "matching_keywords": result.matching_keywords,
+            "similarity_breakdown": result.similarity_breakdown,
+            "recommendations": _generate_improvement_recommendations(result, job_context)
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error explaining algorithm: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to explain algorithm: {str(e)}")
+        logger.error(f"Error explaining project match: {e}")
+        raise HTTPException(status_code=500, detail="Failed to explain match")
 
-@router.delete("/cache/{user_id}")
-async def clear_user_cache(
-    user_id: str,
-    confirm: bool = Query(False, description="Confirm cache deletion")
-):
-    """Clear all cached matching results for a user."""
-    
-    if not confirm:
-        return {
-            "success": False,
-            "message": "Cache deletion requires confirmation. Add ?confirm=true to proceed."
-        }
-    
-    try:
-        invalidated_count = cache_service.invalidate_user_cache(user_id)
-        
-        return {
-            "success": True,
-            "message": f"Cleared {invalidated_count} cached entries for user {user_id}"
-        }
-        
-    except Exception as e:
-        logger.error(f"Error clearing cache: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to clear cache: {str(e)}")
 
 @router.get("/cache/stats")
 async def get_cache_statistics():
@@ -349,45 +277,139 @@ async def get_cache_statistics():
         
         return {
             "success": True,
-            "cache_stats": stats
+            "cache_stats": stats,
+            "mlflow_experiments": len(experiment_tracker.get_experiment_metrics(limit=100))
         }
         
     except Exception as e:
         logger.error(f"Error getting cache stats: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get cache stats: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get cache statistics")
 
-# Helper functions
 
-def _generate_explanation_summary(matched_projects: List[ProjectMatchResponse]) -> Dict[str, Any]:
-    """Generate a summary explanation of the matching results."""
+@router.delete("/cache/{user_id}")
+async def invalidate_user_cache(user_id: str):
+    """Invalidate all cached results for a specific user."""
     
-    if not matched_projects:
-        return {"message": "No matching projects found"}
-    
-    avg_confidence = sum(p.confidence_score for p in matched_projects) / len(matched_projects)
-    
-    # Find most common matching factors
-    all_keywords = []
-    for project in matched_projects:
-        all_keywords.extend(project.matching_keywords)
-    
-    from collections import Counter
-    common_keywords = Counter(all_keywords).most_common(5)
-    
-    return {
-        "total_matches": len(matched_projects), 
-        "average_confidence": round(avg_confidence, 3),
-        "top_matching_keywords": [kw for kw, count in common_keywords],
-        "confidence_distribution": {
-            "excellent": len([p for p in matched_projects if p.confidence_score >= 0.8]),
-            "good": len([p for p in matched_projects if 0.6 <= p.confidence_score < 0.8]),
-            "fair": len([p for p in matched_projects if 0.4 <= p.confidence_score < 0.6]),
-            "poor": len([p for p in matched_projects if p.confidence_score < 0.4])
+    try:
+        invalidated_count = cache_service.invalidate_user_cache(user_id)
+        
+        return {
+            "success": True,
+            "message": f"Invalidated {invalidated_count} cache entries for user {user_id}",
+            "invalidated_count": invalidated_count
         }
-    }
+        
+    except Exception as e:
+        logger.error(f"Error invalidating cache: {e}")
+        raise HTTPException(status_code=500, detail="Failed to invalidate cache")
 
-async def _process_single_match(job_id: str, user_id: str, max_results: int, db: Session):
-    """Background task for processing single match."""
-    # Implementation would mirror the main match logic
-    # This is for the bulk matching feature
-    pass
+
+@router.get("/experiments/compare")
+async def compare_algorithm_performance():
+    """Compare performance of different matching algorithms."""
+    
+    try:
+        comparison = experiment_tracker.compare_algorithms()
+        
+        return {
+            "success": True,
+            "algorithm_comparison": comparison,
+            "total_experiments": sum(stats['runs'] for stats in comparison.values())
+        }
+        
+    except Exception as e:
+        logger.error(f"Error comparing algorithms: {e}")
+        raise HTTPException(status_code=500, detail="Failed to compare algorithms")
+
+
+def _log_matching_experiment(
+    job_context: JobContext,
+    match_results: List,
+    execution_time: float,
+    user_id: str
+):
+    """Log matching experiment to MLflow."""
+    
+    try:
+        # Calculate metrics
+        avg_confidence = sum(r.confidence_score for r in match_results) / len(match_results) if match_results else 0
+        max_confidence = max(r.confidence_score for r in match_results) if match_results else 0
+        min_confidence = min(r.confidence_score for r in match_results) if match_results else 0
+        
+        # Parameters
+        parameters = {
+            "max_results": len(match_results),
+            "user_id": user_id,
+            "job_category": job_context.category or "unknown",
+            "required_skills_count": len(job_context.required_skills),
+            "job_description_length": len(job_context.description)
+        }
+        
+        # Metrics
+        metrics = {
+            "average_confidence": avg_confidence,
+            "max_confidence": max_confidence,
+            "min_confidence": min_confidence,
+            "results_count": len(match_results)
+        }
+        
+        # Job context for artifact
+        job_data = {
+            "job_id": job_context.job_id,
+            "title": job_context.title,
+            "company": job_context.company,
+            "required_skills": job_context.required_skills,
+            "category": job_context.category
+        }
+        
+        # Match results for artifact
+        results_data = [
+            {
+                "project_title": r.project.title,
+                "confidence_score": r.confidence_score,
+                "matching_keywords": r.matching_keywords
+            }
+            for r in match_results
+        ]
+        
+        experiment_tracker.log_matching_experiment(
+            algorithm_name=matcher.get_algorithm_name(),
+            algorithm_version=matcher.get_algorithm_version(),
+            parameters=parameters,
+            metrics=metrics,
+            job_context=job_data,
+            match_results=results_data,
+            execution_time=execution_time
+        )
+        
+    except Exception as e:
+        logger.warning(f"Failed to log MLflow experiment: {e}")
+
+
+def _generate_improvement_recommendations(match_result, job_context: JobContext) -> List[str]:
+    """Generate recommendations for improving project-job match."""
+    
+    recommendations = []
+    
+    # Check missing required skills
+    missing_skills = set(job_context.required_skills) - set(match_result.matching_keywords)
+    if missing_skills:
+        recommendations.append(
+            f"Consider adding these skills to your project: {', '.join(list(missing_skills)[:3])}"
+        )
+    
+    # Check confidence score
+    if match_result.confidence_score < 0.3:
+        recommendations.append(
+            "This project has low relevance. Consider highlighting more relevant technologies or outcomes."
+        )
+    elif match_result.confidence_score < 0.6:
+        recommendations.append(
+            "Good match! Consider emphasizing the matching technologies in your project description."
+        )
+    else:
+        recommendations.append(
+            "Excellent match! This project strongly aligns with the job requirements."
+        )
+    
+    return recommendations

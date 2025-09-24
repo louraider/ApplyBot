@@ -1,6 +1,6 @@
 #this will be handling all the api endpoints in my applicaiton
 from fastapi import APIRouter
-from app.api.v1.endpoints import health, jobs, users, projects, resume, cover_letters
+from app.api.v1.endpoints import health, jobs, users, projects, resume, cover_letters, project_matching
 
 api_router = APIRouter()
 
@@ -11,3 +11,4 @@ api_router.include_router(projects.router, prefix="/projects", tags=["projects"]
 api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 api_router.include_router(resume.router, prefix="/resume", tags=["resume"])
 api_router.include_router(cover_letters.router, prefix="/cover-letters", tags=["cover-letters"])
+api_router.include_router(project_matching.router, prefix="/match", tags=["project-matching"])
