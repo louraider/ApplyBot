@@ -248,3 +248,5 @@ alembic/versions/*.pyc
 # Local development files
 local_*
 dev_*
+
+./app/templates/generated
