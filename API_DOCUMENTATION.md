@@ -3,6 +3,7 @@
 Complete REST API reference for the Job Application Automation System.
 
 ## 🔗 Base URL
+
 ```
 http://localhost:8000/api/v1
 ```
@@ -10,11 +11,13 @@ http://localhost:8000/api/v1
 ## 🔍 Job Management Endpoints
 
 ### Get Jobs
+
 ```http
 GET /jobs
 ```
 
 **Query Parameters:**
+
 - `keywords` (string, optional): Comma-separated search keywords
 - `location` (string, optional): Job location filter
 - `company` (string, optional): Company name filter
@@ -22,6 +25,7 @@ GET /jobs
 - `offset` (int, default: 0): Pagination offset
 
 **Response:**
+
 ```json
 [
   {
@@ -39,11 +43,13 @@ GET /jobs
 ```
 
 ### Fetch New Jobs
+
 ```http
 POST /jobs/fetch
 ```
 
 **Request Body:**
+
 ```json
 {
   "keywords": ["python", "react"],
@@ -52,6 +58,7 @@ POST /jobs/fetch
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -70,11 +77,13 @@ POST /jobs/fetch
 ```
 
 ### Get Job Sources
+
 ```http
 GET /jobs/sources
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -94,17 +103,20 @@ GET /jobs/sources
 ## 🎯 Project Matching Endpoints
 
 ### Match Projects to Job
+
 ```http
 GET /match/{job_id}
 ```
 
 **Query Parameters:**
+
 - `user_id` (string, required): User ID for project matching
 - `algorithm` (string, default: "tfidf"): Matching algorithm
 - `max_results` (int, default: 5): Maximum results to return
 - `use_cache` (bool, default: true): Whether to use cached results
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -132,15 +144,18 @@ GET /match/{job_id}
 ```
 
 ### Explain Project Match
+
 ```http
 POST /match/{job_id}/explain
 ```
 
 **Query Parameters:**
+
 - `project_id` (string, required): Project ID to explain
 - `user_id` (string, required): User ID
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -163,11 +178,13 @@ POST /match/{job_id}/explain
 ## 📄 Resume Generation Endpoints
 
 ### Generate Resume
+
 ```http
 POST /resume/generate
 ```
 
 **Request Body:**
+
 ```json
 {
   "name": "John Doe",
@@ -215,6 +232,7 @@ POST /resume/generate
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -226,6 +244,7 @@ POST /resume/generate
 ```
 
 ### Download Resume
+
 ```http
 GET /resume/download/{resume_id}
 ```
@@ -235,11 +254,13 @@ GET /resume/download/{resume_id}
 ## ✉️ Cover Letter Generation Endpoints
 
 ### Generate Cover Letter for Job
+
 ```http
 POST /cover-letters/{job_id}
 ```
 
 **Request Body:**
+
 ```json
 {
   "user_id": "user-uuid",
@@ -259,6 +280,7 @@ POST /cover-letters/{job_id}
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -271,11 +293,13 @@ POST /cover-letters/{job_id}
 ```
 
 ### Bulk Cover Letter Generation
+
 ```http
 POST /cover-letters/bulk
 ```
 
 **Request Body:**
+
 ```json
 {
   "user_id": "user-uuid",
@@ -287,6 +311,7 @@ POST /cover-letters/bulk
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -310,6 +335,7 @@ POST /cover-letters/bulk
 ```
 
 ### Download Cover Letter
+
 ```http
 GET /cover-letters/{cover_letter_id}/download
 ```
@@ -317,11 +343,13 @@ GET /cover-letters/{cover_letter_id}/download
 **Response:** Text file download
 
 ### Bulk Download Cover Letters
+
 ```http
 POST /cover-letters/bulk/download
 ```
 
 **Query Parameters:**
+
 - `cover_letter_ids` (array): List of cover letter IDs to download
 
 **Response:** ZIP file download containing all cover letters
@@ -329,11 +357,13 @@ POST /cover-letters/bulk/download
 ## 📊 System Endpoints
 
 ### Health Check
+
 ```http
 GET /health
 ```
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -343,11 +373,13 @@ GET /health
 ```
 
 ### Cache Statistics
+
 ```http
 GET /match/cache/stats
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -362,7 +394,7 @@ GET /match/cache/stats
 
 ## 🔒 Authentication
 
-Currently, the API uses simple user_id based identification. For production deployment, implement proper authentication:
+Currently, the API uses simple `user_id` based identification. For production deployment, implement proper authentication:
 
 ```http
 Authorization: Bearer <jwt_token>
@@ -380,6 +412,7 @@ All endpoints return consistent error responses:
 ```
 
 **Common Status Codes:**
+
 - `200` - Success
 - `400` - Bad Request (invalid parameters)
 - `404` - Not Found (resource doesn't exist)
@@ -402,4 +435,4 @@ All endpoints return consistent error responses:
 
 ---
 
-**Interactive API Documentation available at: `http://localhost:8000/docs`**
+**Interactive API Documentation available at:** `http://localhost:8000/docs`
