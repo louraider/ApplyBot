@@ -1,15 +1,22 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional, Dict, Any
 from loguru import logger
+from datetime import datetime, timezone
+from pathlib import Path
+import uuid
 
 from app.database.base import get_db
 from app.schemas.resume import (
     ResumeGenerationRequest, 
     BulkResumeRequest,
     ResumeResponse, 
-    BulkResumeResponse
+    BulkResumeResponse,
+    ProjectItem,
+    EducationItem,
+    SkillCategory,
+    ExperienceItem
 )
 from app.services.resume_generator import resume_generator, ResumeGenerationError
 from app.services.resume_helpers import (
@@ -18,43 +25,13 @@ from app.services.resume_helpers import (
     validate_resume_request,
     prepare_resume_data
 )
+from app.services.project_service import ProjectService
+from app.services.job_service import JobService
+from pydantic import BaseModel
 
 router = APIRouter()
-    name: str
-    phone: str
-    location: str
-    email: str
-    linkedin_url: Optional[str] = None
-    linkedin_display: Optional[str] = None
-    website_url: Optional[str] = None
-    website_display: Optional[str] = None
-    
-    # Professional Information
-    experience_years: Optional[str] = "3+"
-    primary_skills: Optional[List[str]] = []
-    
-    # Resume Sections (will be same for all resumes)
-    education: Optional[List[EducationItem]] = []
-    skills: Optional[List[SkillCategory]] = []
-    experience: Optional[List[ExperienceItem]] = []
-    extra_curricular: Optional[List[str]] = []
-    leadership: Optional[List[str]] = []
-    
-    # Generation Options
-    max_projects_per_resume: int = 4
-    algorithm: str = "tfidf"
 
-class BulkResumeResponse(BaseModel):
-    """Response model for bulk resume generation."""
-    success: bool
-    message: str
-    user_id: str
-    total_jobs: int
-    resumes_generated: List[Dict[str, Any]]
-    failed_jobs: List[Dict[str, Any]]
-    processing_summary: Dict[str, Any]
-    download_urls: List[Dict[str, str]]
-
+# Additional schema classes that seem to be missing
 class JobFilesResponse(BaseModel):
     """Response model for job-specific files."""
     job_id: str

@@ -1,22 +1,26 @@
-\documentclass{resume}
+\documentclass{resume}  % Your custom class
 
-\usepackage[left=0.4 in,top=0.4in,right=0.4 in,bottom=0.4in]{geometry}
+\usepackage[left=0.4in,top=0.4in,right=0.4in,bottom=0.4in]{geometry}
 
-{% raw %}\newcommand{\tab}[1]{\hspace{.2667\textwidth}\rlap{#1}}{% endraw %}
-{% raw %}\newcommand{\itab}[1]{\hspace{0em}\rlap{#1}}{% endraw %}
+% Add hyperlink support for \href{}
+\usepackage{hyperref}
 
+\newcommand{\tab}[1]{\hspace{.2667\textwidth}\rlap{#1}}
+\newcommand{\itab}[1]{\hspace{0em}\rlap{#1}}
 
-\name{ {{ name }} }
+\name{ {{ name | latex_escape }} }
 
-\address{ {{ phone }} \\ {{ location }} }
+\address{ {{ phone | latex_escape }} \\ {{ location | latex_escape }} }
 
-\address{\href{mailto:{{ email }}}{ {{ email }} } \\ \href{ {{ linkedin_url }} }{ {{ linkedin_display }} } \\ \href{ {{ website_url }} }{ {{ website_display }} }}
+\address{
+    {\href{mailto:test@example.com}{test@example.com} \\ \href{https://linkedin.com/in/test}{LinkedIn} \\ \href{https://test.com}{Portfolio}}
+}
 
 \begin{document}
 
 \begin{rSection}{OBJECTIVE}
 
-{{ objective }}
+{{ objective | latex_escape }}
 
 \end{rSection}
 
@@ -24,11 +28,11 @@
 
 {% for edu in education %}
 
-{\bf {{ edu.degree }}}, {{ edu.institution }} \hfill {{ edu.year }}\\
+{\bf {{ edu.degree | latex_escape }}}, {{ edu.institution | latex_escape }} \hfill {{ edu.year | latex_escape }}\\
 
-{% if edu.coursework %}Relevant Coursework: {{ edu.coursework }}.{% endif %}
+{% if edu.coursework %}Relevant Coursework: {{ edu.coursework | latex_escape }}.{% endif %}
 
-{% if edu.gpa %}GPA: {{ edu.gpa }}{% endif %}
+{% if edu.gpa %}GPA: {{ edu.gpa | latex_escape }}{% endif %}
 
 {% if not loop.last %}\\{% endif %}
 
@@ -42,7 +46,7 @@
 
 {% for skill_category in skills %}
 
-{{ skill_category.category }} & {{ skill_category.items | join(', ') }}\\
+{{ skill_category.category | latex_escape }} & {{ skill_category.items | join(', ') | latex_escape }}\\
 
 {% endfor %}
 
@@ -54,9 +58,9 @@
 
 {% for exp in experience %}
 
-\textbf{ {{ exp.role }} } \hfill {{ exp.duration }}\\
+\textbf{ {{ exp.role | latex_escape }} } \hfill {{ exp.duration | latex_escape }}\\
 
-{{ exp.company }} \hfill \textit{ {{ exp.location }} }
+{{ exp.company | latex_escape }} \hfill \textit{ {{ exp.location | latex_escape }} }
 
 \begin{itemize}
 
@@ -64,15 +68,11 @@
 
 {% for achievement in exp.achievements %}
 
-\item {{ achievement }}
+\item {{ achievement | latex_escape }}
 
 {% endfor %}
 
 \end{itemize}
-
-{% if not loop.last %}
-
-{% endif %}
 
 {% endfor %}
 
@@ -86,7 +86,7 @@
 
 {% for project in projects %}
 
-\item \textbf{ {{ project.title }} .} {{ project.description }}
+\item \textbf{ {{ project.title | latex_escape }} .} {{ project.description | latex_escape }}
 
 {% endfor %}
 
@@ -102,7 +102,7 @@
 
 {% for activity in extra_curricular %}
 
-\item {{ activity }}
+\item {{ activity | latex_escape }}
 
 {% endfor %}
 
@@ -120,7 +120,7 @@
 
 {% for leadership_item in leadership %}
 
-\item {{ leadership_item }}
+\item {{ leadership_item | latex_escape }}
 
 {% endfor %}
 

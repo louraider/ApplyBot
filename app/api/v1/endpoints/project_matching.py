@@ -21,7 +21,6 @@ from app.database.base import get_db
 from app.services.matching.TFIDF_matcher import TFIDFProjectMatcher
 from app.services.matching.base_matcher import JobContext
 from app.services.matching.cache_service import MatchingCacheService
-from app.services.matching.mlflow_tracker import experiment_tracker
 from app.services.job_service import JobService
 from app.services.project_service import ProjectService
 
